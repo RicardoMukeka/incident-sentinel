@@ -1,0 +1,92 @@
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <diagram name="IncidentSentinel - Como funciona" id="IncidentSentinel-negocio">
+    <mxGraphModel dx="1285" dy="824" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;" value="IncidentSentinel — do erro em produção ao diagnóstico pronto, sem intervenção manual" vertex="1">
+          <mxGeometry height="50" width="1600" x="60" y="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;fontStyle=1;arcSize=10;" value="Sistemas monitorados&#xa;em produção" vertex="1">
+          <mxGeometry height="140" width="240" x="60" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="b1sub" parent="1" style="text;html=1;fontSize=12;align=center;verticalAlign=top;fontColor=#4d4d4d;" value="Hoje: service-orders e service-checkout&#xa;Amanhã: qualquer app que o time cadastrar" vertex="1">
+          <mxGeometry height="60" width="240" x="60" y="285" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;fontStyle=1;arcSize=10;" value="Monitoramento&#xa;automático, 24/7" vertex="1">
+          <mxGeometry height="140" width="240" x="380" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="b2sub" parent="1" style="text;html=1;fontSize=12;align=center;verticalAlign=top;fontColor=#4d4d4d;" value="Observa esses sistemas a cada 5 minutos,&#xa;procurando 5 tipos de problema conhecido" vertex="1">
+          <mxGeometry height="60" width="240" x="380" y="285" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;fontStyle=1;arcSize=10;" value="Detecta um problema&#xa;novo no dia" vertex="1">
+          <mxGeometry height="140" width="240" x="700" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="b3sub" parent="1" style="text;html=1;fontSize=12;align=center;verticalAlign=top;fontColor=#4d4d4d;" value="Se já existe um tíquete aberto pro mesmo&#xa;problema hoje, só soma a ocorrência —&#xa;não investiga de novo" vertex="1">
+          <mxGeometry height="70" width="240" x="700" y="285" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;fontStyle=1;arcSize=10;" value="Um agente de IA&#xa;investiga sozinho" vertex="1">
+          <mxGeometry height="140" width="240" x="1020" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="b4sub" parent="1" style="text;html=1;fontSize=12;align=center;verticalAlign=top;fontColor=#4d4d4d;" value="Consulta o trace da requisição, os logs detalhados&#xa;e a saúde da infraestrutura —&#xa;dentro de um orçamento diário controlado" vertex="1">
+          <mxGeometry height="70" width="240" x="1020" y="285" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;fontStyle=1;arcSize=10;" value="Tíquete com&#xa;diagnóstico pronto" vertex="1">
+          <mxGeometry height="140" width="240" x="1340" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="b5sub" parent="1" style="text;html=1;fontSize=12;align=center;verticalAlign=top;fontColor=#4d4d4d;" value="Causa provável + solução proposta + nível de confiança —&#xa;o time de sustentação já começa&#xa;sabendo o que aconteceu e por onde ir" vertex="1">
+          <mxGeometry height="70" width="240" x="1340" y="285" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a1" edge="1" parent="1" source="b1" target="b2" style="html=1;endArrow=block;elbow=vertical;startArrow=none;strokeColor=#666666;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="b2" target="b3" style="html=1;endArrow=block;elbow=vertical;startArrow=none;strokeColor=#666666;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" edge="1" parent="1" source="b3" target="b4" style="html=1;endArrow=block;elbow=vertical;startArrow=none;strokeColor=#666666;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" edge="1" parent="1" source="b4" target="b5" style="html=1;endArrow=block;elbow=vertical;startArrow=none;strokeColor=#666666;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="human" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;fontStyle=1;arcSize=10;" value="Time de sustentação&#xa;decide e age" vertex="1">
+          <mxGeometry height="100" width="240" x="1340" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="humansub" parent="1" style="text;html=1;fontSize=12;align=center;verticalAlign=top;fontColor=#4d4d4d;" value="Sem precisar investigar do zero —&#xa;o diagnóstico já está no tíquete" vertex="1">
+          <mxGeometry height="50" width="240" x="1340" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" edge="1" parent="1" source="b5" target="human" style="html=1;endArrow=block;elbow=vertical;startArrow=none;strokeColor=#666666;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="valuebox" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=13;align=left;spacingLeft=14;verticalAlign=top;spacingTop=10;" value="O que isso muda na prática:" vertex="1">
+          <mxGeometry height="180" width="1180" x="60" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="v1" parent="1" style="text;html=1;fontSize=13;align=left;fontColor=#333333;" value="•  Erros novos não passam despercebidos — cada tipo de problema em cada sistema monitorado é pego automaticamente" vertex="1">
+          <mxGeometry height="30" width="1140" x="80" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="v2" parent="1" style="text;html=1;fontSize=13;align=left;fontColor=#333333;" value="•  Menos tempo apagando incêndio às cegas — o time recebe a causa provável já apurada, não uma alerta genérico" vertex="1">
+          <mxGeometry height="30" width="1140" x="80" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="v3" parent="1" style="text;html=1;fontSize=13;align=left;fontColor=#333333;" value="•  Mesmo problema não gera trabalho duplicado — ocorrências repetidas do mesmo erro no dia só se somam a um tíquete existente" vertex="1">
+          <mxGeometry height="30" width="1140" x="80" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="v4" parent="1" style="text;html=1;fontSize=13;align=left;fontColor=#333333;" value="•  Gasto com IA previsível — teto diário de investigações; se estourar, o problema continua visível no tíquete, nunca é descartado" vertex="1">
+          <mxGeometry height="30" width="1140" x="80" y="615" as="geometry" />
+        </mxCell>
+
+        <mxCell id="notebox" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=10;verticalAlign=top;spacingTop=8;fontStyle=2;" value="Onde estamos: o sistema está construído e testado internamente. Ainda falta validar contra os ambientes reais (produção/homologação) antes de operar de verdade." vertex="1">
+          <mxGeometry height="60" width="1180" x="60" y="680" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

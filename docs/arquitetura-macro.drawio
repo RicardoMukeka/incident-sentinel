@@ -1,0 +1,76 @@
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <diagram name="IncidentSentinel - Visão macro" id="IncidentSentinel-arq-macro">
+    <mxGraphModel dx="2870" dy="2445" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" parent="1" style="text;html=1;align=left;fontSize=17;fontStyle=1;" value="IncidentSentinel — Visão macro: estruturas e decisões de arquitetura" vertex="1">
+          <mxGeometry height="30" width="1100" x="40" y="0" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=left;fontSize=11;fontColor=#666666;fontStyle=2;" value="Do erro em produção ao tíquete com causa raiz + solução proposta, sem intervenção manual. Detalhe técnico em arquitetura-tecnica.drawio." vertex="1">
+          <mxGeometry height="20" width="1200" x="40" y="30" as="geometry" />
+        </mxCell>
+
+        <!-- Pipeline row 1 -->
+        <mxCell id="p1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="1. Coleta&#xa;— SigNoz via REST, 5 tipos de erro padrão por app&#xa;— N apps × 5 tipos em paralelo (virtual threads)&#xa;— watermark derivado ao vivo de error_signal_log (sem tabela dedicada)&#xa;— cadastrar app = entra no monitoramento, sem código novo" vertex="1">
+          <mxGeometry height="140" width="360" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="2. Triagem / Dedup&#xa;— chave = SHA-256(app | tipo_erro | atributo)&#xa;— INSERT ... ON DUPLICATE KEY UPDATE (sem captura de exceção)&#xa;— mesmo erro no dia = só soma ocorrência, NÃO reinvestiga&#xa;— determinístico, sem LLM" vertex="1">
+          <mxGeometry height="140" width="360" x="440" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="3. Fila (GCP Pub/Sub)&#xa;— só o 1º de cada erro do dia é enfileirado&#xa;— payload = só o id do tíquete&#xa;— at-least-once → idempotência explícita (orcamento_debitado)&#xa;— DLT: falha de infra vira status visível, não some" vertex="1">
+          <mxGeometry height="140" width="360" x="840" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="4. Orçamento diário (antes do LLM)&#xa;— teto por INVESTIGAÇÃO, incremento atômico&#xa;— feature flag = interruptor duro do caminho de IA&#xa;— estourou / desabilitado = status visível, nunca descarta&#xa;— tokens e custo em US$ acumulados no dia" vertex="1">
+          <mxGeometry height="140" width="360" x="1240" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" parent="1" source="p1" target="p2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e23" parent="1" source="p2" target="p3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e34" parent="1" source="p3" target="p4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Pipeline row 2 -->
+        <mxCell id="p5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="5. Retrieval de evidência — 3 fontes, EM PARALELO, DETERMINÍSTICO&#xa;— o LLM NÃO decide o que buscar; o código chama sempre&#xa;— trace SigNoz (REST)  ·  logs GCP (lib google-cloud-logging)  ·  diagnose_app Tsuru (MCP)&#xa;— cada fonte é DESTILADA num objeto pequeno (não payload bruto)&#xa;— falha de uma fonte não trava: registra em fontes_consultadas e segue" vertex="1">
+          <mxGeometry height="150" width="560" x="40" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="p6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="6. Uma chamada de LLM — SEM tools&#xa;— Gemini via Vertex AI, saída estruturada&#xa;— evidência destilada → causa raiz + categoria + solução proposta + confiança&#xa;— gate: confiança da causa BAIXA → CAUSA_INCONCLUSIVA (sem solução, vai pra humano)&#xa;— temperatura baixa; sem loop de tool-calling" vertex="1">
+          <mxGeometry height="150" width="560" x="660" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="p7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;spacingRight=8;" value="7. Tíquete interno&#xa;— o sistema DIAGNOSTICA; quem RESOLVE é humano&#xa;— nada escrito pelo sistema afirma &quot;aplicado / resolvido&quot;&#xa;— TicketController (API) — sem Jira/ServiceNow&#xa;— campos de feedback do humano gravados na v1 = corpus da v2" vertex="1">
+          <mxGeometry height="150" width="420" x="1280" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="e45" parent="1" source="p4" target="p5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" value="prossegue"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e56" parent="1" source="p5" target="p6" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" value="EvidenceBundle"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e67" parent="1" source="p6" target="p7" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="humano" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Time de sustentação&#xa;lê causa + solução proposta e age;&#xa;registra o que era de fato / o que resolveu" vertex="1">
+          <mxGeometry height="80" width="420" x="1280" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="e7h" parent="1" source="p7" target="humano" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Persistence band -->
+        <mxCell id="db" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;" value="Persistência — MySQL, 5 tabelas, timezone UTC em toda a stack&#xa;app_registry (heartbeat)   ·   error_signal_log (fonte do watermark)   ·   investigation_budget (contador / tokens / custo do dia)&#xa;ticket (causa, solução proposta, feedback humano; UNIQUE app+tipo+chave_dedup+data)   ·   investigation_llm_call (1 linha por chamada de LLM: tokens + custo estimado)" vertex="1">
+          <mxGeometry height="100" width="1180" x="40" y="600" as="geometry" />
+        </mxCell>
+
+        <!-- Deploy band -->
+        <mxCell id="dep" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;" value="Deploy — 1 aplicação HA (2+ réplicas): coletor + investigador + API no mesmo processo&#xa;Tsuru Job só dispara uma chamada HTTP a cada 5 min (não @Scheduled) — entregue a um único pod pelo load balancer, sem lock distribuído&#xa;Binário do MCP Tsuru empacotado na imagem (único subprocesso); SigNoz e GCP são chamadas de rede diretas, sem subprocesso" vertex="1">
+          <mxGeometry height="100" width="1180" x="40" y="720" as="geometry" />
+        </mxCell>
+
+        <!-- Decisions panel -->
+        <mxCell id="dec" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;spacingRight=10;" value="Decisões de arquitetura (macro)" vertex="1">
+          <mxGeometry height="750" width="520" x="1740" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_body" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=11;spacingLeft=12;spacingRight=12;spacingTop=4;" value="1. Retrieval 100% determinístico — o LLM nunca decide o que buscar nem em que ordem. Custo previsível e testável era a prioridade #1.&#xa;&#xa;2. Uma chamada de LLM, sem tools (v1). Sem loop de tool-calling — cada tool call decidida pelo modelo custa outra rodada, com o contexto re-cobrado.&#xa;&#xa;3. MCP só onde há lógica de verdade. Tsuru diagnose_app agrega e classifica (21 categorias) → vale MCP. SigNoz trace e logs GCP são busca mecânica sobre API documentada → REST / client library, sem subprocesso.&#xa;&#xa;4. O sistema diagnostica, o humano resolve. Nenhum campo escrito pelo sistema afirma que algo foi aplicado. &quot;resolvido&quot; é transição humana.&#xa;&#xa;5. Não descarta. Todo caminho de falha (orçamento, parsing, infra, flag off, causa inconclusiva) termina num status visível no tíquete — nunca numa mensagem perdida.&#xa;&#xa;6. Dedup na camada de negócio, não na busca. UNIQUE + INSERT ON DUPLICATE KEY UPDATE garantem &quot;não reinvestiga&quot; mesmo se a coleta trouxer o mesmo erro 2×.&#xa;&#xa;7. HA sem coordenação frágil. 1 deployable, coletor por trigger HTTP (não @Scheduled por réplica). Concorrência real tratada com escrita atômica no banco.&#xa;&#xa;8. Custo rastreado de verdade. A GCP retorna tokens, não US$ — o valor é calculado de um price map em config, com snapshot por chamada (custo histórico estável).&#xa;&#xa;9. v2 planejada, não construída. Failure Book (RAG sobre tíquetes resolvidos) + split do LLM em agente de causa / agente de solução — só quando houver corpus (~30–50 resolvidos) e evidência de que a solução genérica é fraca. Ver docs/ARCHITECTURE.md" vertex="1">
+          <mxGeometry height="700" width="520" x="1740" y="105" as="geometry" />
+        </mxCell>
+
+        <!-- Fase 2/3 note -->
+        <mxCell id="fases" parent="1" style="text;html=1;align=left;fontSize=10;fontColor=#666666;fontStyle=2;spacingLeft=8;" value="Fontes de sinal futuras (mesma abstração ErrorSignalSource, sem redesenho): Fase 2 Prometheus/Grafana (infra) · Fase 3 ServiceNow (chamados já abertos, só leitura)." vertex="1">
+          <mxGeometry height="40" width="1180" x="40" y="840" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

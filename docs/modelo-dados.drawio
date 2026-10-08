@@ -1,0 +1,127 @@
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <diagram name="IncidentSentinel - Modelo de dados (v2)" id="IncidentSentinel-modelo-dados-v2">
+    <mxGraphModel dx="2870" dy="2445" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" parent="1" style="text;html=1;align=left;fontSize=16;fontStyle=1;" value="IncidentSentinel — Modelo de dados (v2) — 5 tabelas" vertex="1">
+          <mxGeometry height="30" width="700" x="40" y="0" as="geometry" />
+        </mxCell>
+
+        <!-- app_registry -->
+        <mxCell id="ar" parent="1" style="swimlane;html=1;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;align=center;" value="app_registry" vertex="1">
+          <mxGeometry height="198" width="320" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ar_pk" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="PK  service_name : VARCHAR(150)" vertex="1"><mxGeometry height="24" width="320" y="30" as="geometry" /></mxCell>
+        <mxCell id="ar_1" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="display_name : VARCHAR(150)" vertex="1"><mxGeometry height="24" width="320" y="54" as="geometry" /></mxCell>
+        <mxCell id="ar_2" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="ativo : BOOLEAN" vertex="1"><mxGeometry height="24" width="320" y="78" as="geometry" /></mxCell>
+        <mxCell id="ar_3" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="criado_em : DATETIME(6)" vertex="1"><mxGeometry height="24" width="320" y="102" as="geometry" /></mxCell>
+        <mxCell id="ar_4" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontColor=#666666;" value="ultima_execucao_inicio : DATETIME(6)" vertex="1"><mxGeometry height="24" width="320" y="126" as="geometry" /></mxCell>
+        <mxCell id="ar_5" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontColor=#666666;" value="ultima_execucao_fim : DATETIME(6)" vertex="1"><mxGeometry height="24" width="320" y="150" as="geometry" /></mxCell>
+        <mxCell id="ar_6" parent="ar" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontColor=#666666;" value="ultima_execucao_status : VARCHAR(20)" vertex="1"><mxGeometry height="24" width="320" y="174" as="geometry" /></mxCell>
+        <mxCell id="ar_note" parent="1" style="text;html=1;align=left;fontSize=10;fontColor=#666666;fontStyle=2;" value="heartbeat do coletor (não é watermark)&#xa;cadastrar aqui = app entra em monitoramento" vertex="1">
+          <mxGeometry height="40" width="320" x="40" y="264" as="geometry" />
+        </mxCell>
+
+        <!-- error_signal_log -->
+        <mxCell id="esl" parent="1" style="swimlane;html=1;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=13;align=center;" value="error_signal_log" vertex="1">
+          <mxGeometry height="198" width="340" x="480" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="esl_pk" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="PK  id : BIGINT AUTO_INCREMENT" vertex="1"><mxGeometry height="24" width="340" y="30" as="geometry" /></mxCell>
+        <mxCell id="esl_fk_app" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="FK  app : VARCHAR(150)" vertex="1"><mxGeometry height="24" width="340" y="54" as="geometry" /></mxCell>
+        <mxCell id="esl_1" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="tipo_erro : VARCHAR(50)" vertex="1"><mxGeometry height="24" width="340" y="78" as="geometry" /></mxCell>
+        <mxCell id="esl_dedup" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="chave_dedup : CHAR(64)" vertex="1"><mxGeometry height="24" width="340" y="102" as="geometry" /></mxCell>
+        <mxCell id="esl_trace" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="trace_id : VARCHAR(128)  nullable" vertex="1"><mxGeometry height="24" width="340" y="126" as="geometry" /></mxCell>
+        <mxCell id="esl_2" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="timestamp : DATETIME(6)" vertex="1"><mxGeometry height="24" width="340" y="150" as="geometry" /></mxCell>
+        <mxCell id="esl_3" parent="esl" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="outcome : VARCHAR(20)  — NOVO_TICKET | ASSOCIADO" vertex="1"><mxGeometry height="24" width="340" y="174" as="geometry" /></mxCell>
+        <mxCell id="esl_note" parent="1" style="text;html=1;align=left;fontSize=10;fontColor=#666666;fontStyle=2;" value="INDEX (app, tipo_erro, timestamp)&#xa;fonte do watermark — MAX(timestamp) POR app+tipo_erro (não agregado)&#xa;escrito pela TriageService na MESMA transação do ticket&#xa;1 registro por sinal avaliado, sem purga na v1" vertex="1">
+          <mxGeometry height="66" width="340" x="480" y="264" as="geometry" />
+        </mxCell>
+
+        <!-- investigation_budget -->
+        <mxCell id="ib" parent="1" style="swimlane;html=1;startSize=30;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=13;align=center;" value="investigation_budget" vertex="1">
+          <mxGeometry height="126" width="320" x="940" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ib_pk" parent="ib" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="PK  dia : DATE" vertex="1"><mxGeometry height="24" width="320" y="30" as="geometry" /></mxCell>
+        <mxCell id="ib_1" parent="ib" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="contador : BIGINT  — investigações no dia" vertex="1"><mxGeometry height="24" width="320" y="54" as="geometry" /></mxCell>
+        <mxCell id="ib_2" parent="ib" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="tokens_acumulados : BIGINT" vertex="1"><mxGeometry height="24" width="320" y="78" as="geometry" /></mxCell>
+        <mxCell id="ib_3" parent="ib" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="custo_acumulado_usd : DECIMAL(12,4)" vertex="1"><mxGeometry height="24" width="320" y="102" as="geometry" /></mxCell>
+        <mxCell id="ib_note" parent="1" style="text;html=1;align=left;fontSize=10;fontColor=#666666;fontStyle=2;" value="dia sempre LocalDate.now(ZoneOffset.UTC), bindado pela JVM&#xa;— nunca CURRENT_DATE/NOW() do MySQL&#xa;contador / tokens / custo: sempre UPDATE atômico, nunca SELECT+save()&#xa;rollup diário — o detalhe por chamada fica em investigation_llm_call" vertex="1">
+          <mxGeometry height="66" width="360" x="940" y="192" as="geometry" />
+        </mxCell>
+
+        <!-- ticket -->
+        <mxCell id="tk" parent="1" style="swimlane;html=1;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;align=center;" value="ticket" vertex="1">
+          <mxGeometry height="606" width="380" x="40" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="tk_pk" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="PK  id : BIGINT AUTO_INCREMENT" vertex="1"><mxGeometry height="24" width="380" y="30" as="geometry" /></mxCell>
+        <mxCell id="tk_fk_app" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="FK,UK  app : VARCHAR(150)" vertex="1"><mxGeometry height="24" width="380" y="54" as="geometry" /></mxCell>
+        <mxCell id="tk_1" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="UK  tipo_erro : VARCHAR(50)" vertex="1"><mxGeometry height="24" width="380" y="78" as="geometry" /></mxCell>
+        <mxCell id="tk_dedup" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="UK  chave_dedup : CHAR(64)" vertex="1"><mxGeometry height="24" width="380" y="102" as="geometry" /></mxCell>
+        <mxCell id="tk_2" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="UK  data : DATE" vertex="1"><mxGeometry height="24" width="380" y="126" as="geometry" /></mxCell>
+        <mxCell id="tk_trace" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="trace_id : VARCHAR(128)  nullable (1ª ocorrência)" vertex="1"><mxGeometry height="24" width="380" y="150" as="geometry" /></mxCell>
+        <mxCell id="tk_3" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="status : VARCHAR(40)" vertex="1"><mxGeometry height="24" width="380" y="174" as="geometry" /></mxCell>
+        <mxCell id="tk_grp1" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=10;fontStyle=2;fontColor=#2d6a2d;fillColor=#eafaea;" value="— saída da investigação (sistema escreve, 1x, hipótese) —" vertex="1"><mxGeometry height="20" width="380" y="198" as="geometry" /></mxCell>
+        <mxCell id="tk_4" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="causa_raiz : TEXT" vertex="1"><mxGeometry height="24" width="380" y="218" as="geometry" /></mxCell>
+        <mxCell id="tk_5" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="causa_categoria : VARCHAR(30)" vertex="1"><mxGeometry height="24" width="380" y="242" as="geometry" /></mxCell>
+        <mxCell id="tk_6" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="confianca_causa : VARCHAR(10)" vertex="1"><mxGeometry height="24" width="380" y="266" as="geometry" /></mxCell>
+        <mxCell id="tk_7" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="solucao_proposta : TEXT" vertex="1"><mxGeometry height="24" width="380" y="290" as="geometry" /></mxCell>
+        <mxCell id="tk_8" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="confianca_solucao : VARCHAR(10)" vertex="1"><mxGeometry height="24" width="380" y="314" as="geometry" /></mxCell>
+        <mxCell id="tk_9" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="investigado_em : DATETIME(6)" vertex="1"><mxGeometry height="24" width="380" y="338" as="geometry" /></mxCell>
+        <mxCell id="tk_10" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="fontes_consultadas : JSON" vertex="1"><mxGeometry height="24" width="380" y="362" as="geometry" /></mxCell>
+        <mxCell id="tk_grp2" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=10;fontStyle=2;fontColor=#8a6d1d;fillColor=#fbf3dd;" value="— resolução (humano escreve; v1 grava, não lê — corpus da v2) —" vertex="1"><mxGeometry height="20" width="380" y="386" as="geometry" /></mxCell>
+        <mxCell id="tk_11" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="resolvido_em : DATETIME(6)  nullable" vertex="1"><mxGeometry height="24" width="380" y="406" as="geometry" /></mxCell>
+        <mxCell id="tk_12" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="resolvido_por : VARCHAR(150)  nullable" vertex="1"><mxGeometry height="24" width="380" y="430" as="geometry" /></mxCell>
+        <mxCell id="tk_13" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="avaliacao_causa : VARCHAR(20)  nullable" vertex="1"><mxGeometry height="24" width="380" y="454" as="geometry" /></mxCell>
+        <mxCell id="tk_14" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="causa_efetiva : TEXT  nullable" vertex="1"><mxGeometry height="24" width="380" y="478" as="geometry" /></mxCell>
+        <mxCell id="tk_15" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="avaliacao_solucao : VARCHAR(20)  nullable" vertex="1"><mxGeometry height="24" width="380" y="502" as="geometry" /></mxCell>
+        <mxCell id="tk_16" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="solucao_efetiva : TEXT  nullable" vertex="1"><mxGeometry height="24" width="380" y="526" as="geometry" /></mxCell>
+        <mxCell id="tk_17" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontColor=#666666;" value="primeira_ocorrencia_ts : DATETIME(6)" vertex="1"><mxGeometry height="24" width="380" y="550" as="geometry" /></mxCell>
+        <mxCell id="tk_18" parent="tk" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontColor=#666666;" value="ultima_ocorrencia_ts : DATETIME(6)  /  contagem_ocorrencias : INT" vertex="1"><mxGeometry height="24" width="380" y="574" as="geometry" /></mxCell>
+        <mxCell id="tk_note" parent="1" style="text;html=1;align=left;fontSize=10;fontColor=#666666;fontStyle=2;" value="UNIQUE (app, tipo_erro, chave_dedup, data) — sustenta o dedup (INSERT ... ON DUPLICATE KEY UPDATE)&#xa;INDEX (status), INDEX (data) — pro TicketController&#xa;+ orcamento_debitado : BOOLEAN (idempotência do débito de orçamento)&#xa;status: EM_INVESTIGACAO | ABERTO | CAUSA_INCONCLUSIVA | INVESTIGACAO_PULADA_ORCAMENTO_EXCEDIDO |&#xa;  INVESTIGACAO_FALHOU_PARSING | INVESTIGACAO_FALHOU_INFRA | INVESTIGACAO_DESABILITADA | RESOLVIDO&#xa;causa_categoria: INFRA_RECURSO | INFRA_REDE | DEPENDENCIA_DOWNSTREAM | CONFIGURACAO | CODIGO | INDETERMINADA" vertex="1">
+          <mxGeometry height="100" width="620" x="40" y="1000" as="geometry" />
+        </mxCell>
+
+        <!-- investigation_llm_call -->
+        <mxCell id="lc" parent="1" style="swimlane;html=1;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=13;align=center;" value="investigation_llm_call" vertex="1">
+          <mxGeometry height="270" width="360" x="500" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="lc_pk" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="PK  id : BIGINT AUTO_INCREMENT" vertex="1"><mxGeometry height="24" width="360" y="30" as="geometry" /></mxCell>
+        <mxCell id="lc_fk" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;fontStyle=4;" value="FK  ticket_id : BIGINT" vertex="1"><mxGeometry height="24" width="360" y="54" as="geometry" /></mxCell>
+        <mxCell id="lc_1" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="agente : VARCHAR(30)  — v1: INVESTIGADOR" vertex="1"><mxGeometry height="24" width="360" y="78" as="geometry" /></mxCell>
+        <mxCell id="lc_2" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="model : VARCHAR(60)" vertex="1"><mxGeometry height="24" width="360" y="102" as="geometry" /></mxCell>
+        <mxCell id="lc_3" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="prompt_tokens : INT" vertex="1"><mxGeometry height="24" width="360" y="126" as="geometry" /></mxCell>
+        <mxCell id="lc_4" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="completion_tokens : INT" vertex="1"><mxGeometry height="24" width="360" y="150" as="geometry" /></mxCell>
+        <mxCell id="lc_5" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="total_tokens : INT" vertex="1"><mxGeometry height="24" width="360" y="174" as="geometry" /></mxCell>
+        <mxCell id="lc_6" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="custo_estimado_usd : DECIMAL(12,6)" vertex="1"><mxGeometry height="24" width="360" y="198" as="geometry" /></mxCell>
+        <mxCell id="lc_7" parent="lc" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=8;fontSize=11;" value="created_at : DATETIME(6)" vertex="1"><mxGeometry height="24" width="360" y="222" as="geometry" /></mxCell>
+        <mxCell id="lc_note" parent="1" style="text;html=1;align=left;fontSize=10;fontColor=#666666;fontStyle=2;" value="INDEX (ticket_id), INDEX (created_at)&#xa;1 linha por chamada de LLM — 1 por investigação na v1, 2 na v2 (agente = ANALISTA | SOLUCAO)&#xa;custo_estimado_usd = tokens × preço-da-época (price map em config) — snapshot, custo histórico estável&#xa;a GCP/Vertex retorna tokens, NÃO dinheiro" vertex="1">
+          <mxGeometry height="66" width="440" x="500" y="660" as="geometry" />
+        </mxCell>
+
+        <!-- legend -->
+        <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=8;" value="Legenda&#xa;PK = chave primária    FK = chave estrangeira    UK = participa de UNIQUE composta&#xa;linha sólida com pé-de-galinha = relacionamento com FK real&#xa;linha tracejada = correlação lógica, SEM constraint de FK no banco" vertex="1">
+          <mxGeometry height="80" width="620" x="1000" y="760" as="geometry" />
+        </mxCell>
+
+        <!-- relationships -->
+        <mxCell id="rel1" edge="1" parent="1" source="ar" target="esl" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;rounded=0;html=1;" value="1 app : N sinais avaliados">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel2" edge="1" parent="1" source="ar" target="tk" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;rounded=0;html=1;" value="1 app : N tickets">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel3" edge="1" parent="1" source="tk" target="lc" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;rounded=0;html=1;" value="1 ticket : N chamadas de LLM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel4" edge="1" parent="1" source="esl_dedup" target="tk_dedup" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;strokeColor=#999999;endArrow=none;startArrow=none;html=1;" value="mesma chave_dedup (SHA-256 de app+tipo_erro+atributo) — NÃO é FK">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel5" edge="1" parent="1" source="ib" target="tk" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;strokeColor=#999999;endArrow=none;startArrow=none;html=1;" value="idempotência do orçamento (orcamento_debitado) — NÃO é FK, chave é a data (UTC)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

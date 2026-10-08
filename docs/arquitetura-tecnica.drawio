@@ -1,0 +1,208 @@
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <diagram name="IncidentSentinel - Arquitetura técnica (v2)" id="IncidentSentinel-arq-tecnica-v2">
+    <mxGraphModel dx="6880" dy="3090" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=left;fontSize=16;fontStyle=1;" value="IncidentSentinel — Arquitetura técnica (v2) — retrieval determinístico, 1 chamada de LLM, sem GitLab" vertex="1">
+          <mxGeometry height="30" width="1100" x="40" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="job" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Tsuru Job&#xa;cron */5 * * * *&#xa;curl POST /internal/collector/run (X-Trigger-Secret)" vertex="1">
+          <mxGeometry height="70" width="240" x="40" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="lb" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Service / Load Balancer K8s&#xa;entrega a UM único pod — sem lock distribuído" vertex="1">
+          <mxGeometry height="70" width="240" x="320" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="e_job_lb" edge="1" parent="1" source="job" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="lb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="app" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;fontSize=12;fontStyle=1;spacingTop=6;" value="App HA — IncidentSentinel (2+ réplicas), Spring Boot 4.0.6, virtual threads" vertex="1">
+          <mxGeometry height="2436" width="3200" x="-860" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="CollectorTriggerController&#xa;POST /run (202, @Async) + GET /status" vertex="1">
+          <mxGeometry height="56" width="240" x="70" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lb_ctrl" edge="1" parent="1" source="lb" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="ctrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="coll" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="CollectorService&#xa;N apps × 5 TipoErro em paralelo (virtual threads)&#xa;falha isolada por app+tipo não aborta o ciclo&#xa;heartbeat em app_registry (início E fim), métrica em try/finally" vertex="1">
+          <mxGeometry height="86" width="340" x="-360" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ctrl_coll" edge="1" parent="1" source="ctrl" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="coll">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="signozsrc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="SignozErrorSignalSource (ErrorSignalSource)&#xa;SignozQueryClient (Feign) + 5 query templates&#xa;+ SignozResponseMapper (extrai traceID)&#xa;Retry/CircuitBreaker programáticos (Resilience4j)" vertex="1">
+          <mxGeometry height="86" width="340" x="-360" y="569" as="geometry" />
+        </mxCell>
+        <mxCell id="e_coll_src" edge="1" parent="1" source="coll" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="signozsrc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wm_note" parent="1" style="text;html=1;align=left;fontSize=9;fontColor=#666666;fontStyle=2;" value="watermark = MAX(timestamp) FROM error_signal_log POR app+tipo_erro&#xa;desde = max(watermark − overlap, agora − maxLookback); fallback agora−1h se vazio&#xa;sem UPDATE de watermark — leitura pura, recalculado ao vivo" vertex="1">
+          <mxGeometry height="52" width="420" x="-490" y="2198" as="geometry" />
+        </mxCell>
+        <mxCell id="triage" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="TriageService.processar(sinal) — @Transactional&#xa;DedupKeyBuilder (SHA-256 completo)&#xa;INSERT ticket ... ON DUPLICATE KEY UPDATE  +  INSERT error_signal_log  (mesma tx)&#xa;useAffectedRows=true → 1 (novo) / 2 (já existia); isolamento por sinal" vertex="1">
+          <mxGeometry height="90" width="440" x="250" y="569" as="geometry" />
+        </mxCell>
+        <mxCell id="e_src_triage" edge="1" parent="1" source="signozsrc" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="triage" value="sinais em memória (sem persistir antes)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e8;strokeColor=#82b366;fontSize=10;" value="affected rows = 2&#xa;→ associa ocorrência&#xa;(contagem++, ultima_ocorrencia_ts)" vertex="1">
+          <mxGeometry height="60" width="220" x="840" y="584" as="geometry" />
+        </mxCell>
+        <mxCell id="e_triage_assoc" edge="1" parent="1" source="triage" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" target="assoc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oOuvt-rgLghJzOnwAZZg-2" connectable="0" parent="e_triage_assoc" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="duplicado" vertex="1">
+          <mxGeometry relative="1" x="-0.259" y="3" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="ticket EM_INVESTIGACAO&#xa;NovoErroPub.publicar(ticketId)" vertex="1">
+          <mxGeometry height="56" width="240" x="350" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="e_triage_pub" edge="1" parent="1" source="triage" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="pub" value="1 (novo)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="NovoErroSub (AckMode.MANUAL, payload = só o id)&#xa;guarda re-pagamento: status != EM_INVESTIGACAO → redelivery de trabalho já feito, retorna&#xa;guarda orcamento_debitado (UPDATE ... WHERE = false)&#xa;→ InvestigationBudgetService: flag enabled + incremento atômico (contador+1, WHERE dia=? JVM/UTC)&#xa;LlmInvocationException → nack → redelivery Pub/Sub" vertex="1">
+          <mxGeometry height="104" width="380" x="560" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pub_sub" edge="1" parent="1" source="pub" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="sub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gate1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="2 travas do dia (whichever hits first):&#xa;contagem &gt;= daily-budget  OU  custo_acumulado_usd &gt;= daily-cost-cap-usd&#xa;ou enabled=false?&#xa;→ INVESTIGACAO_PULADA_ORCAMENTO_EXCEDIDO&#xa;ou INVESTIGACAO_DESABILITADA (não descarta)" vertex="1">
+          <mxGeometry height="90" width="300" x="1090" y="947" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub_gate1" edge="1" parent="1" source="sub" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" target="gate1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="orch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" value="InvestigationOrchestrator&#xa;chama os 3 retrievers EM PARALELO (virtual threads) — nenhum depende do outro&#xa;.orTimeout(retriever-timeout) por CompletableFuture — MCP travado não trava a investigação&#xa;falha/timeout isolado por retriever → fontes_consultadas (consultada|indisponivel|timeout|pulada)" vertex="1">
+          <mxGeometry height="80" width="700" x="400" y="1187" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub_orch" edge="1" parent="1" source="sub" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="orch" value="prosseguir">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_trace" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" value="SignozTraceRetriever&#xa;REST /api/v5/query_range (filtro trace_id)&#xa;SignozTraceResponseMapper: dedup span_id&#xa;+ hierarquia parent_span_id&#xa;TraceDistiller → TraceFacts (~40 spans)" vertex="1">
+          <mxGeometry height="110" width="230" x="170" y="1440" as="geometry" />
+        </mxCell>
+        <mxCell id="r_log" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" value="GcpLogRetriever&#xa;lib google-cloud-logging (ADC)&#xa;filter: trace=... AND severity&gt;=WARNING&#xa;LogDistiller → LogFacts (~50 linhas)" vertex="1">
+          <mxGeometry height="110" width="230" x="635" y="1440" as="geometry" />
+        </mxCell>
+        <mxCell id="r_tsuru" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" value="TsuruDiagnoseRetriever&#xa;MCP Tsuru (STDIO, READ_ONLY=true)&#xa;diagnose_app → PlatformFacts&#xa;(21 categorias já priorizadas)&#xa;client MCP programático — nunca a um ChatClient" vertex="1">
+          <mxGeometry height="110" width="240" x="1100" y="1440" as="geometry" />
+        </mxCell>
+        <mxCell id="e_orch_rt" edge="1" parent="1" source="orch" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="r_trace">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_orch_rl" edge="1" parent="1" source="orch" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="r_log">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_orch_rd" edge="1" parent="1" source="orch" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="r_tsuru">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="bundle" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" value="EvidenceBundle (record)&#xa;TraceFacts + LogFacts + PlatformFacts + fontes_consultadas — DESTILADO, não payload bruto" vertex="1">
+          <mxGeometry height="56" width="700" x="399" y="1810" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rt_b" edge="1" parent="1" source="r_trace" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="bundle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rl_b" edge="1" parent="1" source="r_log" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="bundle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rd_b" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="bundle">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1220" y="1680" />
+              <mxPoint x="749" y="1680" />
+            </Array>
+            <mxPoint x="1220" y="1580" as="sourcePoint" />
+            <mxPoint x="749" y="1840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="llm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontStyle=1;" value="ChatClientInvestigationCaller — UMA chamada, SEM tools&lt;div&gt;&lt;br&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;system (dado ≠ comando) + user (EvidenceBundle + format do BeanOutputConverter)&lt;br&gt;IDA À REDE: ResilientCaller.chamarComTimeout(&quot;vertex-ai&quot;) — retry + CB + llm-timeout → falha = LlmInvocationException (infra, propaga)&lt;br&gt;CONVERSÃO: BeanOutputConverter.convert() FORA do wrapper → falha = parsing → INVESTIGACAO_FALHOU_PARSING&lt;br&gt;LlmCallRecorder: grava investigation_llm_call + incrementa investigation_budget (tokens + custo)&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="104" width="600" x="1530" y="1976" as="geometry" />
+        </mxCell>
+        <mxCell id="redact" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;fontStyle=1;" value="RedactionService — redação na ENTRADA&lt;div&gt;&lt;br&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;redige cada *Facts ANTES de montar o prompt: AWS/Google key, GitLab PAT, JWT, bloco PRIVATE KEY, URI com credencial, Bearer, chave=valor&lt;br&gt;segredo nunca sai pra a Vertex AI · redigiu algo → métrica incidentsentinel.investigation.prompt.redacted + WARN&lt;br&gt;hard cap prompt-max-chars (rede de segurança) → métrica prompt.truncated&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="96" width="700" x="399" y="1980" as="geometry" />
+        </mxCell>
+        <mxCell id="e_b_redact" edge="1" parent="1" source="bundle" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="redact">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_b_llm" edge="1" parent="1" source="redact" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tgen" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="&lt;b&gt;TicketGenerationService&lt;/b&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;confianca_causa == BAIXA → CAUSA_INCONCLUSIVA (ignora solucao_proposta)&lt;br&gt;senão → ABERTO (causa + solução proposta)&lt;br&gt;falha parsing → INVESTIGACAO_FALHOU_PARSING; confiança nula → BAIXA&lt;br&gt;RedactionService na SAÍDA (causa_raiz/solucao_proposta — nome, não valor) → TicketService (único a persistir Ticket)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="600" x="1530" y="2230" as="geometry" />
+        </mxCell>
+        <mxCell id="e_llm_tgen" edge="1" parent="1" source="llm" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="tgen">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oOuvt-rgLghJzOnwAZZg-3" edge="1" parent="1" source="dlt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="gate1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dlt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" value="NovoErroDLTSub (AckMode.AUTO)&#xa;esgotou tentativas Pub/Sub → INVESTIGACAO_FALHOU_INFRA (fica visível, não só loga)" vertex="1">
+          <mxGeometry height="60" width="360" x="1120" y="808" as="geometry" />
+        </mxCell>
+        <mxCell id="tc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="&lt;b&gt;TicketController&lt;/b&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;GET /tickets (PagedModel, filtros app/status/data via JpaSpecificationExecutor)&lt;br&gt;GET /tickets/{id} (404 → ProblemDetail RFC 9457)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="440" x="1610" y="2390" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tgen_tc" edge="1" parent="1" source="tgen" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="tc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="humano" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;Humano / dashboard futuro&lt;br&gt;&lt;/b&gt;lê causa + solução proposta; grava avaliacao_* / *_efetiva (corpus da v2)" vertex="1">
+          <mxGeometry height="60" width="440" x="1610" y="2510" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tc_h" edge="1" parent="1" source="tc" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="humano">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_signoz" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="SigNoz&#xa;POST /api/v5/query_range&#xa;header SIGNOZ-API-KEY&#xa;(coleta + trace lookup — REST, NÃO MCP)" vertex="1">
+          <mxGeometry height="90" width="240" x="30" y="1580" as="geometry" />
+        </mxCell>
+        <mxCell id="e_src_ext" edge="1" parent="1" source="signozsrc" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;entryX=0.987;entryY=0.566;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="oOuvt-rgLghJzOnwAZZg-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="70" y="674.0344827586207" as="sourcePoint" />
+            <mxPoint x="-370" y="686.0344827586207" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_rtrace_ext" edge="1" parent="1" source="r_trace" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="ext_signoz">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_gcp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="GCP Cloud Logging&#xa;lib google-cloud-logging, ADC&#xa;roles/logging.viewer&#xa;(pré-req: apps escrevem trace_id no log)" vertex="1">
+          <mxGeometry height="90" width="240" x="490" y="1580" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rlog_ext" edge="1" parent="1" source="r_log" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="ext_gcp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_tsuru" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="MCP Tsuru — subprocesso STDIO&#xa;binário tsuru-mcp na imagem&#xa;TSURU_TOKEN/TARGET, READ_ONLY=true&#xa;ÚNICO MCP (diagnose_app tem lógica real)" vertex="1">
+          <mxGeometry height="90" width="240" x="960" y="1580" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rtsuru_ext" edge="1" parent="1" source="r_tsuru" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="ext_tsuru">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_vertex" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="&lt;b&gt;Vertex AI Gemini&lt;/b&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;spring-ai-starter-model-google-genai&lt;br&gt;(não -vertex-ai-gemini — removido do Spring AI 2.0)&lt;br&gt;gemini-2.0-flash, temp 0.15&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="260" x="1873" y="2100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_llm_ext" edge="1" parent="1" source="llm" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" target="ext_vertex">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_pubsub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="GCP Pub/Sub&#xa;topic novo-erro + subscription + DLT&#xa;max-ack-extension-period &gt; p99 investigação" vertex="1">
+          <mxGeometry height="70" width="260" x="680" y="803" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pub_ext" edge="1" parent="1" source="pub" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" target="ext_pubsub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ext_sub" edge="1" parent="1" source="ext_pubsub" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" target="sub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;" value="MySQL (Liquibase, 5 tabelas) — timezone UTC em toda a stack&#xa;• app_registry (heartbeat ultima_execucao_*)&#xa;• error_signal_log (INDEX app+tipo_erro+timestamp — fonte do watermark; trace_id nullable; sem purga v1)&#xa;• investigation_budget (dia PK/UTC, contador, tokens_acumulados, custo_acumulado_usd)&#xa;• ticket (UNIQUE app+tipo_erro+chave_dedup+data; causa_*/confianca_*/solucao_*; feedback humano avaliacao_*/*_efetiva grava-não-lê;&#xa;   status: EM_INVESTIGACAO|ABERTO|CAUSA_INCONCLUSIVA|INVESTIGACAO_PULADA_ORCAMENTO_EXCEDIDO|_FALHOU_PARSING|_FALHOU_INFRA|_DESABILITADA|RESOLVIDO)&#xa;• investigation_llm_call (1 linha/chamada — 1 na v1, 2 na v2; tokens + custo_estimado_usd snapshot)" vertex="1">
+          <mxGeometry height="160" width="900" x="-490" y="2290" as="geometry" />
+        </mxCell>
+        <mxCell id="obs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left;verticalAlign=top;spacingTop=6;spacingLeft=8;" value="Observabilidade (Micrometer + /actuator/prometheus)&#xa;• incidentsentinel.collector.cycle.duration (Timer)&#xa;• incidentsentinel.triage.signal.failure (Counter, tag app+tipo_erro)&#xa;• incidentsentinel.investigation.outcome (Counter, tag outcome = TicketStatus)&#xa;• incidentsentinel.investigation.retriever (Counter, tags retriever + outcome)&#xa;• incidentsentinel.investigation.prompt.truncated / .prompt.redacted (Counter)&#xa;• tokens.acumulados / custo.acumulado.usd (Gauge — LIDO do banco, não in-memory)&#xa;• resilience4j-micrometer (por fonte: signoz / tsuru-mcp / gcp-logging / vertex-ai)&#xa;• alertas: coletor parado / orçamento estourado (contagem ou custo) / fonte indisponível / prompt.redacted &gt; 0" vertex="1">
+          <mxGeometry height="188" width="760" x="-490" y="2470" as="geometry" />
+        </mxCell>
+        <mxCell id="oOuvt-rgLghJzOnwAZZg-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" value="SigNoz&lt;br&gt;POST /api/v5/query_range&lt;br&gt;header SIGNOZ-API-KEY&lt;br&gt;(coleta + trace lookup — REST)" vertex="1">
+          <mxGeometry height="90" width="240" x="-740" y="560" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
